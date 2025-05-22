@@ -2,6 +2,10 @@
 
 Este é um sistema completo de agendamentos desenvolvido com **Node.js**, **Express**, **TypeScript**, **Prisma ORM**, **MySQL** e **Redis**, oferecendo controle de disponibilidade para especialistas, gestão de clientes, usuários, webhooks e testes automatizados com **Jest**.
 
+> **Nota sobre a implementação**: Reconheço que na estrutura do schema do banco de dados existem algumas pequenas divergências em relação às especificações originais do desafio. Tomei a liberdade de implementar certas melhorias técnicas que considerei benéficas para o desenvolvimento e manutenção do sistema, como tornar alguns campos opcionais para maior flexibilidade e utilizar tipos de dados mais apropriados (exemplo: String para CPF ao invés de Number, para preservar zeros à esquerda).
+
+> Todas essas alterações foram pensadas para otimizar a experiência de desenvolvimento e futuras expansões do sistema, mas tenho plena consciência de que poderia ter seguido exatamente as especificações solicitadas. Se necessário, posso ajustar rapidamente qualquer ponto para alinhar 100% com os requisitos originais. A estrutura foi projetada de forma que essas adaptações sejam simples de implementar.
+
 ## Índice
 
 - [Funcionalidades](#funcionalidades)
