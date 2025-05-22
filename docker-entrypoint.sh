@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 echo "Waiting for MySQL to be ready..."
 while ! nc -z db 3306; do
@@ -13,4 +14,4 @@ npx prisma generate
 npx prisma migrate dev --name init
 
 echo "Starting application..."
-npm run dev
+exec npm run dev

@@ -171,10 +171,10 @@ O sistema usa **BullMQ** com **Redis** para gerenciar tarefas assíncronas. Prin
 
 ### Roles do Sistema
 
-- **ADMIN**: Acesso total, incluindo gerenciamento de usuários e configurações.
-- **DOCTOR**: Gerencia agendas e atendimentos.
-- **RECEPTIONIST**: Gerencia agendamentos e pacientes.
-- **PATIENT**: Visualiza e gerencia seus próprios agendamentos.
+- **admin**: Acesso total, incluindo gerenciamento de usuários e configurações.
+- **specialist**: Gerencia agendas e atendimentos.
+- **scheduler**: Gerencia agendamentos e pacientes.
+- **client**: Visualiza e gerencia seus próprios agendamentos.
 
 ### Configuração de Webhooks
 

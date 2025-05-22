@@ -81,7 +81,7 @@ app.post('/webhook', validateSignature, (req: Request, res: Response) => {
   });
 });
 
-const PORT = 3030;
+const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`Receptor de Webhook rodando em http://localhost:${PORT}/webhook`);
   console.log('Aguardando eventos...');

@@ -1,5 +1,4 @@
 version: '3.8'
-
 services:
   app:
     build:
@@ -15,7 +14,7 @@ services:
       - DATABASE_URL=mysql://root:password@db:3306/agenda
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - JWT_SECRET=your-jwt-secret-key
+      - JWT_SECRET=lRHGP2NjJRlYEv8itu7QLucGp9v3x # <- Definir esta variável
       - NODE_ENV=development
       - ADMIN_USER=admin
       - ADMIN_PASSWORD=strongpassword

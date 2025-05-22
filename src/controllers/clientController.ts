@@ -1,24 +1,11 @@
 import { Request, Response } from 'express';
-import { prisma } from '../services/prismaClient';
 import clientValidator from '../validators/clientValidator';
+import clientService from '../services/clientService';
 
 export default {
   async getAll(req: Request, res: Response): Promise<Response> {
     try {
-      const clients = await prisma.client.findMany({
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              active: true,
-              priority: true
-            }
-          }
-        }
-      });
-
+      const clients = await clientService.getAllClients();
       return res.json(clients);
     } catch (error) {
       console.error(error);
@@ -29,29 +16,15 @@ export default {
   async getById(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
-
-      const client = await prisma.client.findUnique({
-        where: { id },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              active: true,
-              priority: true
-            }
-          }
-        }
-      });
-
-      if (!client) {
-        return res.status(404).json({ error: 'Cliente não encontrado' });
-      }
-
+      const client = await clientService.getClientById(id);
       return res.json(client);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      
+      if (error.message === 'Cliente não encontrado') {
+        return res.status(404).json({ error: error.message });
+      }
+      
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   },
@@ -66,43 +39,28 @@ export default {
         return res.status(400).json({ error: validatedData.error.details[0].message });
       }
 
-      const clientExists = await prisma.client.findUnique({
-        where: { id }
-      });
-
-      if (!clientExists) {
-        return res.status(404).json({ 
-          error: 'Cliente não encontrado. Verifique o ID informado.' 
-        });
+      if (!req.userId || !req.userRole) {
+        return res.status(401).json({ error: 'Usuário não autenticado' });
       }
 
-      if (req.userId !== clientExists.user_id && req.userRole !== 'admin') {
-        return res.status(403).json({ 
-          error: 'Você não tem permissão para atualizar este perfil' 
-        });
-      }
-
-      const updatedClient = await prisma.client.update({
-        where: { id },
-        data: {
-          phone,
-          cpf
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              active: true
-            }
-          }
-        }
-      });
+      const updatedClient = await clientService.updateClientProfile(
+        id,
+        { phone, cpf },
+        req.userId,
+        req.userRole
+      );
 
       return res.json(updatedClient);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      
+      if (error.message === 'Cliente não encontrado. Verifique o ID informado.' ||
+          error.message === 'Você não tem permissão para atualizar este perfil') {
+        return res.status(error.message.includes('permissão') ? 403 : 404).json({ 
+          error: error.message 
+        });
+      }
+      
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   },
@@ -111,47 +69,28 @@ export default {
     try {
       const { id } = req.params;
 
-      const clientExists = await prisma.client.findUnique({
-        where: { id }
-      });
-
-      if (!clientExists) {
-        return res.status(404).json({ 
-          error: 'Cliente não encontrado. Verifique o ID informado.' 
-        });
+      if (!req.userId || !req.userRole) {
+        return res.status(401).json({ error: 'Usuário não autenticado' });
       }
 
-      if (req.userId !== clientExists.user_id && 
-         !['admin', 'scheduler'].includes(req.userRole || '')) {
-        return res.status(403).json({ 
-          error: 'Você não tem permissão para acessar este histórico' 
-        });
-      }
-
-      const appointments = await prisma.appointment.findMany({
-        where: {
-          client_id: id
-        },
-        include: {
-          specialist: {
-            include: {
-              user: {
-                select: {
-                  name: true,
-                  email: true
-                }
-              }
-            }
-          }
-        },
-        orderBy: {
-          date: 'desc'
-        }
-      });
+      const appointments = await clientService.getClientAppointmentsHistory(
+        id,
+        req.userId,
+        req.userRole
+      );
 
       return res.json(appointments);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      
+      if (error.message === 'Cliente não encontrado. Verifique o ID informado.') {
+        return res.status(404).json({ error: error.message });
+      }
+      
+      if (error.message === 'Você não tem permissão para acessar este histórico') {
+        return res.status(403).json({ error: error.message });
+      }
+      
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   },
@@ -161,35 +100,28 @@ export default {
       const { id } = req.params;
       const { priority } = req.body;
 
-      if (typeof priority !== 'boolean') {
-        return res.status(400).json({ error: 'O campo priority deve ser um booleano' });
+      if (!req.userRole) {
+        return res.status(401).json({ error: 'Usuário não autenticado' });
       }
 
-      const client = await prisma.client.findUnique({
-        where: { id },
-        include: { user: true }
-      });
+      const result = await clientService.setClientPriority(id, priority, req.userRole);
 
-      if (!client) {
-        return res.status(404).json({ error: 'Cliente não encontrado' });
-      }
-
-      if (req.userRole !== 'admin') {
-        return res.status(403).json({ 
-          error: 'Apenas administradores podem alterar a prioridade de clientes' 
-        });
-      }
-
-      await prisma.user.update({
-        where: { id: client.user_id },
-        data: { priority }
-      });
-
-      return res.json({ 
-        message: `Prioridade do cliente ${client.user.name} alterada para ${priority ? 'prioritário' : 'normal'}` 
-      });
-    } catch (error) {
+      return res.json(result);
+    } catch (error: any) {
       console.error(error);
+      
+      if (error.message === 'O campo priority deve ser um booleano') {
+        return res.status(400).json({ error: error.message });
+      }
+      
+      if (error.message === 'Cliente não encontrado') {
+        return res.status(404).json({ error: error.message });
+      }
+      
+      if (error.message === 'Apenas administradores podem alterar a prioridade de clientes') {
+        return res.status(403).json({ error: error.message });
+      }
+      
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }

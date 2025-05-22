@@ -1,81 +1,11 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
-import availabilityService from '../services/availabilityService';
 import specialistValidator from '../validators/specialistValidator';
-import { UserRole } from '../types/user';
-
-const prisma = new PrismaClient();
+import specialistService from '../services/specialistService';
 
 export default {
   async getAll(req: Request, res: Response): Promise<Response> {
     try {
-      console.log('[SpecialistController] Buscando todos os especialistas...');
-      
-      const specialists = await prisma.specialist.findMany({
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              role: true,
-              active: true,
-            },
-          },
-        },
-      });
-      
-      console.log(`[SpecialistController] Encontrados ${specialists.length} especialistas`);
-      
-      if (specialists.length === 0) {
-        const specialistUsers = await prisma.user.findMany({
-          where: { role: 'specialist' }
-        });
-        
-        console.log(`[SpecialistController] Existem ${specialistUsers.length} usuários com role 'specialist'`);
-        
-        if (specialistUsers.length > 0) {
-          console.log('[SpecialistController] ALERTA: Existem usuários especialistas sem perfil de especialista!');
-          
-          for (const user of specialistUsers) {
-            console.log(`[SpecialistController] Criando perfil de especialista para o usuário ${user.id}`);
-            
-            const existingSpecialist = await prisma.specialist.findUnique({
-              where: { user_id: user.id }
-            });
-            
-            if (!existingSpecialist) {
-              await prisma.specialist.create({
-                data: {
-                  user_id: user.id,
-                  specialty: "Não especificada",
-                  daily_limit: 8,
-                  min_interval_minutes: 30,
-                  availability: {}
-                }
-              });
-              console.log(`[SpecialistController] Perfil de especialista criado para ${user.id}`);
-            }
-          }
-          
-          const updatedSpecialists = await prisma.specialist.findMany({
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                  role: true,
-                  active: true,
-                },
-              },
-            },
-          });
-          
-          return res.json(updatedSpecialists);
-        }
-      }
-
+      const specialists = await specialistService.getSpecialistsWithAutoCreation();
       return res.json(specialists);
     } catch (error) {
       console.error('[SpecialistController] Erro ao buscar especialistas:', error);
@@ -96,79 +26,29 @@ export default {
 
       const { user_id, specialty, daily_limit = 8, min_interval_minutes = 30, availability = {} } = req.body;
 
-      const user = await prisma.user.findUnique({
-        where: { id: user_id }
+      const result = await specialistService.createOrUpdateSpecialist({
+        user_id,
+        specialty,
+        daily_limit,
+        min_interval_minutes,
+        availability
       });
 
-      if (!user) {
-        return res.status(404).json({ 
-          error: 'Usuário não encontrado. Verifique o ID informado.' 
-        });
-      }
-
-      if (user.role !== 'specialist') {
-        return res.status(400).json({ 
-          error: 'Operação inválida: o usuário deve ter papel de especialista.' 
-        });
-      }
-
-      const existingSpecialist = await prisma.specialist.findUnique({
-        where: { user_id }
-      });
-
-      if (existingSpecialist) {
-        const updatedSpecialist = await prisma.specialist.update({
-          where: { user_id },
-          data: {
-            specialty,
-            daily_limit,
-            min_interval_minutes,
-            availability
-          },
-          include: {
-            user: {
-              select: {
-                name: true,
-                email: true,
-                role: true
-              }
-            }
-          }
-        });
-        
-        return res.json({
-          message: 'Horários do especialista atualizados com sucesso',
-          specialist: updatedSpecialist
-        });
-      }
-
-      const specialist = await prisma.specialist.create({
-        data: {
-          user_id,
-          specialty,
-          daily_limit,
-          min_interval_minutes,
-          availability
-        },
-        include: {
-          user: {
-            select: {
-              name: true,
-              email: true,
-              role: true
-            }
-          }
-        }
-      });
-
-      return res.status(201).json({
-        message: 'Horários do especialista definidos com sucesso',
-        specialist
-      });
-    } catch (error) {
+      const statusCode = result.message.includes('atualizados') ? 200 : 201;
+      return res.status(statusCode).json(result);
+    } catch (error: any) {
       console.error('Erro ao definir horários do especialista:', error);
+      
+      if (error.message === 'Usuário não encontrado. Verifique o ID informado.') {
+        return res.status(404).json({ error: error.message });
+      }
+      
+      if (error.message === 'Operação inválida: o usuário deve ter papel de especialista.') {
+        return res.status(400).json({ error: error.message });
+      }
+      
       return res.status(500).json({ 
-        error: `Erro ao definir horários do especialista: ${(error as Error).message}` 
+        error: `Erro ao definir horários do especialista: ${error.message}` 
       });
     }
   },
@@ -176,29 +56,15 @@ export default {
   async getById(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
-
-      const specialist = await prisma.specialist.findUnique({
-        where: { id },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              role: true,
-              active: true,
-            },
-          },
-        },
-      });
-
-      if (!specialist) {
-        return res.status(404).json({ error: 'Especialista não encontrado' });
-      }
-
+      const specialist = await specialistService.getSpecialistById(id);
       return res.json(specialist);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      
+      if (error.message === 'Especialista não encontrado') {
+        return res.status(404).json({ error: error.message });
+      }
+      
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   },
@@ -208,27 +74,19 @@ export default {
       const { id } = req.params;
       const { availability } = req.body;
 
-      const validAvailability = availabilityService.validateAvailability(availability);
-      if (!validAvailability.valid) {
-        return res.status(400).json({ error: validAvailability.message });
-      }
-
-      const specialist = await prisma.specialist.findUnique({
-        where: { id },
-      });
-
-      if (!specialist) {
-        return res.status(404).json({ error: 'Especialista não encontrado' });
-      }
-
-      const updatedSpecialist = await prisma.specialist.update({
-        where: { id },
-        data: { availability },
-      });
-
+      const updatedSpecialist = await specialistService.updateSpecialistAvailability(id, availability);
       return res.json(updatedSpecialist);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      
+      if (error.message === 'Especialista não encontrado') {
+        return res.status(404).json({ error: error.message });
+      }
+      
+      if (error.message.includes('disponibilidade')) {
+        return res.status(400).json({ error: error.message });
+      }
+      
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   },
@@ -238,59 +96,53 @@ export default {
       const { id } = req.params;
       const { date } = req.query;
 
-      if (!date || typeof date !== 'string') {
-        return res.status(400).json({ error: 'Data é obrigatória' });
-      }
-
-      const availableSlots = await availabilityService.getAvailableSlots(id, date);
+      const availableSlots = await specialistService.getSpecialistAvailableSlots(
+        id, 
+        date as string
+      );
       
       return res.json(availableSlots);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      
+      if (error.message === 'Data é obrigatória') {
+        return res.status(400).json({ error: error.message });
+      }
+      
       return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   },
+
   async createOrUpdateAvailability(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
       const { availability } = req.body;
 
-      const validAvailability = availabilityService.validateAvailability(availability);
-      if (!validAvailability.valid) {
-        return res.status(400).json({ 
-          error: `Formato de disponibilidade inválido: ${validAvailability.message}` 
-        });
-      }
-
-      const specialist = await prisma.specialist.findUnique({
-        where: { id },
-        include: { user: true }
+      const result = await specialistService.createOrUpdateAvailability({
+        specialistId: id,
+        availability,
+        userId: req.userId,
+        userRole: req.userRole
       });
 
-      if (!specialist) {
-        return res.status(404).json({ error: 'Especialista não encontrado' });
-      }
-
-      if (req.userRole !== UserRole.ADMIN && specialist.user_id !== req.userId) {
-        return res.status(403).json({ 
-          error: 'Você não tem permissão para gerenciar a disponibilidade deste especialista' 
-        });
-      }
-
-      const updatedSpecialist = await prisma.specialist.update({
-        where: { id },
-        data: { availability },
-        include: { user: true }
-      });
-
-      return res.json({
-        message: 'Horários do especialista atualizados com sucesso',
-        specialist: updatedSpecialist
-      });
-    } catch (error) {
+      return res.json(result);
+    } catch (error: any) {
       console.error(error);
+      
+      if (error.message === 'Especialista não encontrado') {
+        return res.status(404).json({ error: error.message });
+      }
+      
+      if (error.message.includes('Formato de disponibilidade inválido')) {
+        return res.status(400).json({ error: error.message });
+      }
+      
+      if (error.message.includes('não tem permissão')) {
+        return res.status(403).json({ error: error.message });
+      }
+      
       return res.status(500).json({ 
-        error: `Erro ao atualizar disponibilidade: ${(error as Error).message}` 
+        error: `Erro ao atualizar disponibilidade: ${error.message}` 
       });
     }
   }

@@ -611,6 +611,7 @@
       "put": {
         "tags": ["Specialists"],
         "summary": "Atualizar disponibilidade de um especialista",
+        "description": "Atualiza os horários disponíveis de um especialista",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
@@ -620,7 +621,8 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
+            },
+            "description": "ID do especialista"
           }
         ],
         "requestBody": {
@@ -628,27 +630,101 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Availability"
+                "$ref": "#/components/schemas/AvailabilityUpdate"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Disponibilidade atualizada",
+            "description": "Disponibilidade atualizada com sucesso",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Specialist"
+                  "$ref": "#/components/schemas/AvailabilityResponse"
                 }
               }
             }
           },
           "400": {
-            "description": "Dados inválidos"
+            "description": "Dados inválidos ou formato de disponibilidade inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Formato de disponibilidade inválido: horários devem estar no formato HH:MM"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Token de acesso inválido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado - Apenas o próprio especialista ou admin pode alterar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Você não tem permissão para gerenciar a disponibilidade deste especialista"
+                    }
+                  }
+                }
+              }
+            }
           },
           "404": {
-            "description": "Especialista não encontrado"
+            "description": "Especialista não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Especialista não encontrado"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Erro interno do servidor"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1580,6 +1656,27 @@
           }
         }
       },
+      "AvailabilityUpdate": {
+        "type": "object",
+        "description": "Estrutura para atualização de disponibilidade de especialista",
+        "properties": {
+          "availability": {
+            "$ref": "#/components/schemas/Availability"
+          }
+        },
+        "required": ["availability"],
+        "example": {
+          "availability": {
+            "monday": ["08:00", "09:00", "10:00", "14:00", "15:00"],
+            "tuesday": ["08:00", "14:00"],
+            "wednesday": ["10:00", "11:00"],
+            "thursday": ["09:00", "15:00"],
+            "friday": ["10:00", "16:00"],
+            "saturday": ["08:00"],
+            "sunday": ["14:00"]
+          }
+        }
+      },
       "Availability": {
         "type": "object",
         "description": "Horários disponíveis para cada dia da semana no formato HH:MM",
@@ -1588,57 +1685,84 @@
             "type": "array",
             "items": {
               "type": "string",
-              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+              "example": "08:00"
             },
-            "example": ["08:00", "09:00", "10:00", "14:00", "15:00"]
+            "example": ["08:00", "09:00", "10:00", "14:00", "15:00"],
+            "description": "Horários disponíveis na segunda-feira"
           },
           "tuesday": {
             "type": "array",
             "items": {
               "type": "string",
-              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+              "example": "08:00"
             },
-            "example": ["08:00", "14:00"]
+            "example": ["08:00", "14:00"],
+            "description": "Horários disponíveis na terça-feira"
           },
           "wednesday": {
             "type": "array",
             "items": {
               "type": "string",
-              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+              "example": "10:00"
             },
-            "example": ["10:00", "11:00"]
+            "example": ["10:00", "11:00"],
+            "description": "Horários disponíveis na quarta-feira"
           },
           "thursday": {
             "type": "array",
             "items": {
               "type": "string",
-              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+              "example": "09:00"
             },
-            "example": ["09:00", "15:00"]
+            "example": ["09:00", "15:00"],
+            "description": "Horários disponíveis na quinta-feira"
           },
           "friday": {
             "type": "array",
             "items": {
               "type": "string",
-              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+              "example": "10:00"
             },
-            "example": ["10:00", "16:00"]
+            "example": ["10:00", "16:00"],
+            "description": "Horários disponíveis na sexta-feira"
           },
           "saturday": {
             "type": "array",
             "items": {
               "type": "string",
-              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+              "example": "08:00"
             },
-            "example": ["08:00"]
+            "example": ["08:00"],
+            "description": "Horários disponíveis no sábado"
           },
           "sunday": {
             "type": "array",
             "items": {
               "type": "string",
-              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+              "example": "14:00"
             },
-            "example": ["14:00"]
+            "example": ["14:00"],
+            "description": "Horários disponíveis no domingo"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AvailabilityResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Horários do especialista atualizados com sucesso"
+          },
+          "specialist": {
+            "$ref": "#/components/schemas/Specialist"
           }
         }
       },
