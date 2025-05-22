@@ -95,17 +95,14 @@ export default {
   },
 
   async updateClientProfile(id: string, data: UpdateClientData, userId: string, userRole: string) {
-    // Verificar se cliente existe
     const clientExists = await this.validateClientExists(id);
 
-    // Verificar permissões
     this.validateUpdatePermission({
       userId,
       userRole,
       targetUserId: clientExists.user_id
     });
 
-    // Atualizar cliente
     const updatedClient = await prisma.client.update({
       where: { id },
       data: {
@@ -128,17 +125,13 @@ export default {
   },
 
   async getClientAppointmentsHistory(id: string, userId: string, userRole: string) {
-    // Verificar se cliente existe
     const clientExists = await this.validateClientExists(id);
 
-    // Verificar permissões de acesso
     this.validateHistoryAccessPermission({
       userId,
       userRole,
       targetUserId: clientExists.user_id
     });
-
-    // Buscar histórico
     const appointments = await prisma.appointment.findMany({
       where: {
         client_id: id
@@ -177,14 +170,11 @@ export default {
   },
 
   async setClientPriority(id: string, priority: boolean, userRole: string) {
-    // Validações
     this.validatePriorityValue(priority);
     this.validateAdminPermission(userRole);
 
-    // Buscar cliente
     const client = await this.getClientWithUser(id);
 
-    // Atualizar prioridade
     await prisma.user.update({
       where: { id: client.user_id },
       data: { priority }

@@ -68,12 +68,10 @@ export default {
   async createAppointment(data: CreateAppointmentData) {
     const { client_id, specialist_id, date, time, scheduled_by_id } = data;
 
-    // Validações
     const clientExists = await this.validateClientExists(client_id);
     const specialistExists = await this.validateSpecialistExists(specialist_id);
     await this.validateTimeSlotAvailability(specialist_id, date, time);
 
-    // Criação do appointment
     const appointment = await prisma.appointment.create({
       data: {
         client_id,
@@ -107,7 +105,6 @@ export default {
       }
     });
 
-    // Serviços adicionais
     await notificationService.scheduleReminder(appointment);
 
     await auditService.logAction(
@@ -225,7 +222,6 @@ export default {
       throw new Error('Agendamento não encontrado');
     }
 
-    // Validação específica para cancelamento
     if (status === AppointmentStatus.CANCELLED) {
       const appointmentDateTime = new Date(`${appointment.date.toISOString().split('T')[0]}T${appointment.time}:00`);
       const now = new Date();
@@ -242,10 +238,8 @@ export default {
   async updateAppointmentStatus(data: UpdateStatusData) {
     const { appointmentId, status, userId } = data;
 
-    // Validações
     await this.validateStatusUpdate(appointmentId, status);
 
-    // Notificações específicas para status
     if (status === AppointmentStatus.CANCELLED) {
       await notificationService.cancelReminders(appointmentId);
       await notificationService.sendCancellationNotification(appointmentId);
@@ -255,7 +249,6 @@ export default {
       await notificationService.sendConfirmationNotification(appointmentId);
     }
 
-    // Atualização do appointment
     const updatedAppointment = await prisma.appointment.update({
       where: { id: appointmentId },
       data: { status },
@@ -273,7 +266,6 @@ export default {
       }
     });
 
-    // Audit log
     await auditService.logAction(
       userId,
       status === AppointmentStatus.RESCHEDULED ? 'reschedule' : 'cancel',
@@ -282,7 +274,6 @@ export default {
       `Status do agendamento alterado para ${status}`
     );
 
-    // Webhooks
     if (status === AppointmentStatus.CANCELLED) {
       await webhookService.notifyAppointmentCancelled(updatedAppointment);
     } else if (status === AppointmentStatus.COMPLETED) {
@@ -297,7 +288,6 @@ export default {
   async rescheduleAppointment(data: RescheduleData) {
     const { appointmentId, date, time, userId } = data;
 
-    // Buscar appointment atual
     const currentAppointment = await prisma.appointment.findUnique({
       where: { id: appointmentId },
       include: {
@@ -310,23 +300,19 @@ export default {
       throw new Error('Agendamento não encontrado');
     }
 
-    // Verificar disponibilidade do novo horário
     await this.validateTimeSlotAvailability(
       currentAppointment.specialist_id,
       date,
       time
     );
 
-    // Marcar appointment atual como reagendado
     await prisma.appointment.update({
       where: { id: appointmentId },
       data: { status: AppointmentStatus.RESCHEDULED },
     });
 
-    // Cancelar lembretes do appointment atual
     await notificationService.cancelReminders(appointmentId);
 
-    // Criar novo appointment
     const newAppointment = await prisma.appointment.create({
       data: {
         client_id: currentAppointment.client_id,
@@ -351,10 +337,8 @@ export default {
       }
     });
 
-    // Agendar lembretes para o novo appointment
     await notificationService.scheduleReminder(newAppointment);
 
-    // Audit log
     await auditService.logAction(
       userId,
       'reschedule',
@@ -363,7 +347,6 @@ export default {
       `Agendamento remarcado para ${date} às ${time}`
     );
 
-    // Webhook
     await webhookService.notifyAppointmentRescheduled(newAppointment);
 
     return newAppointment;

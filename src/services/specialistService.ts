@@ -81,7 +81,6 @@ export default {
         await this.createMissingSpecialistProfile(user.id);
       }
       
-      // Retornar especialistas atualizados
       return await this.getAllSpecialists();
     }
     
@@ -174,10 +173,8 @@ export default {
   },
 
   async createOrUpdateSpecialist(data: CreateSpecialistData) {
-    // Validar usuário
     await this.validateUserForSpecialist(data.user_id);
 
-    // Verificar se já existe
     const existingSpecialist = await this.findExistingSpecialist(data.user_id);
 
     if (existingSpecialist) {
@@ -223,16 +220,13 @@ export default {
   },
 
   async updateSpecialistAvailability(id: string, availability: any) {
-    // Validar disponibilidade
     const validAvailability = availabilityService.validateAvailability(availability);
     if (!validAvailability.valid) {
       throw new Error(validAvailability.message);
     }
 
-    // Validar se especialista existe
     await this.validateSpecialistExists(id);
 
-    // Atualizar
     const updatedSpecialist = await prisma.specialist.update({
       where: { id },
       data: { availability },
@@ -270,16 +264,13 @@ export default {
   async createOrUpdateAvailability(data: UpdateAvailabilityData) {
     const { specialistId, availability, userId, userRole } = data;
 
-    // Validar disponibilidade
     const validAvailability = availabilityService.validateAvailability(availability);
     if (!validAvailability.valid) {
       throw new Error(`Formato de disponibilidade inválido: ${validAvailability.message}`);
     }
 
-    // Validar permissões
     await this.validateManagePermission(specialistId, userId, userRole);
 
-    // Atualizar
     const updatedSpecialist = await prisma.specialist.update({
       where: { id: specialistId },
       data: { availability },

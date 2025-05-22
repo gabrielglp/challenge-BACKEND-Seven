@@ -133,12 +133,10 @@ export default {
       availability 
     } = data;
 
-    // Validações
     await this.validateUserExists(email);
     await this.validateClientRegistrationData(role, phone, cpf);
     await this.validateSpecialistRegistrationData(role, specialty);
 
-    // Criar usuário
     const user = await this.createUser({ name, email, password, role });
 
     let clientProfile = null;
@@ -196,14 +194,11 @@ export default {
   async loginUser(data: LoginData) {
     const { email, password } = data;
 
-    // Buscar usuário
     const user = await this.findUserByEmail(email);
     
-    // Validações
     await this.validateUserIsActive(user);
     await this.validatePassword(password, user.password);
 
-    // Gerar token e resposta
     const token = this.generateToken(user.id);
     return this.createUserAuthResponse(user, token);
   }

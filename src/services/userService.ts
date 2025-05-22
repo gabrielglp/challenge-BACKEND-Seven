@@ -81,7 +81,6 @@ export default {
   async updateUser(id: string, data: UpdateUserData) {
     console.log('[UserService] Atualizando usuário:', id);
     
-    // Validar se usuário existe
     await this.validateUserExists(id);
 
     const updatedUser = await prisma.user.update({
@@ -110,7 +109,6 @@ export default {
   async deactivateUser(id: string) {
     console.log('[UserService] Desativando usuário:', id);
     
-    // Validar se usuário existe
     await this.validateUserExists(id);
 
     await prisma.user.update({
@@ -201,10 +199,8 @@ export default {
     console.log('[UserService] Sincronizando perfis de usuários...');
     
     try {
-      // Criar perfis de cliente
       const clientProfilesCreated = await this.createClientProfiles();
       
-      // Criar perfis de especialista
       const specialistProfilesCreated = await this.createSpecialistProfiles();
       
       const result = {
