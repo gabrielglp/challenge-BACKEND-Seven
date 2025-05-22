@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: agenda-api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DATABASE_URL=mysql://root:password@db:3306/agenda
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=your-jwt-secret-key
+      - NODE_ENV=development
+      - ADMIN_USER=admin
+      - ADMIN_PASSWORD=strongpassword
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    networks:
+      - agenda-network
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    container_name: agenda-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=agenda
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - agenda-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.0-alpine
+    container_name: agenda-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - agenda-network
+    restart: unless-stopped
+
+networks:
+  agenda-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  redis-data:

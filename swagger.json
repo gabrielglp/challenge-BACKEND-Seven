@@ -1,0 +1,1887 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API de Agendamentos",
+    "description": "API RESTful para sistema de agendamentos com controle de disponibilidade",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Operações de autenticação"
+    },
+    {
+      "name": "Users",
+      "description": "Operações com usuários"
+    },
+    {
+      "name": "Specialists",
+      "description": "Operações com especialistas"
+    },
+    {
+      "name": "Clients",
+      "description": "Operações com clientes"
+    },
+    {
+      "name": "Appointments",
+      "description": "Operações de agendamento"
+    },
+    {
+      "name": "AuditLogs",
+      "description": "Operações com logs de auditoria"
+    },
+    {
+      "name": "Webhooks",
+      "description": "Operações com webhooks"
+    }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Cadastrar novo usuário",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistration"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuário cadastrado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Autenticar usuário",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Login"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Autenticação bem-sucedida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciais inválidas"
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Listar todos os usuários",
+        "description": "Retorna uma lista com todos os usuários (somente admin)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Lista de usuários",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "403": {
+            "description": "Acesso negado"
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Obter usuário por ID",
+        "description": "Retorna os dados de um usuário específico",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuário encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "403": {
+            "description": "Acesso negado"
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Users"],
+        "summary": "Atualizar usuário",
+        "description": "Atualiza os dados de um usuário",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Usuário atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "403": {
+            "description": "Acesso negado"
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Desativar usuário",
+        "description": "Desativa um usuário (soft delete)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuário desativado com sucesso"
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "403": {
+            "description": "Acesso negado"
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          }
+        }
+      }
+    },
+    "/users/sync-profiles": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Sincronizar perfis de usuários",
+        "description": "Cria perfis de cliente e especialista para usuários que não os possuem (somente admin)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Perfis sincronizados com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Perfis de usuários sincronizados com sucesso"
+                    },
+                    "clientProfilesCreated": {
+                      "type": "integer",
+                      "example": 2
+                    },
+                    "specialistProfilesCreated": {
+                      "type": "integer",
+                      "example": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "403": {
+            "description": "Acesso negado"
+          },
+          "500": {
+            "description": "Erro interno do servidor"
+          }
+        }
+      }
+    },
+    "/clients": {
+      "get": {
+        "tags": ["Clients"],
+        "summary": "Listar todos os clientes",
+        "description": "Retorna uma lista com todos os clientes (admin e atendente)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Lista de clientes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Client"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "403": {
+            "description": "Acesso negado"
+          }
+        }
+      }
+    },
+    "/clients/{id}": {
+      "get": {
+        "tags": ["Clients"],
+        "summary": "Obter cliente por ID",
+        "description": "Retorna os dados de um cliente específico",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cliente encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Client"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "404": {
+            "description": "Cliente não encontrado"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Clients"],
+        "summary": "Atualizar cliente",
+        "description": "Atualiza os dados de um cliente",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cliente atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Client"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "403": {
+            "description": "Acesso negado"
+          },
+          "404": {
+            "description": "Cliente não encontrado"
+          }
+        }
+      }
+    },
+    "/clients/{id}/priority": {
+      "put": {
+        "tags": ["Clients"],
+        "summary": "Definir prioridade do cliente",
+        "description": "Define se um cliente é prioritário ou não (somente admin)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "priority": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["priority"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Prioridade definida com sucesso"
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "403": {
+            "description": "Acesso negado"
+          },
+          "404": {
+            "description": "Cliente não encontrado"
+          }
+        }
+      }
+    },
+    "/clients/{id}/appointments": {
+      "get": {
+        "tags": ["Clients"],
+        "summary": "Obter histórico de agendamentos do cliente",
+        "description": "Retorna o histórico de agendamentos de um cliente",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Histórico de agendamentos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Appointment"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "403": {
+            "description": "Acesso negado"
+          },
+          "404": {
+            "description": "Cliente não encontrado"
+          }
+        }
+      }
+    },
+    "/specialists": {
+      "get": {
+        "tags": ["Specialists"],
+        "summary": "Listar todos os especialistas",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Lista de especialistas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Specialist"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Specialists"],
+        "summary": "Definir horários disponíveis",
+        "description": "Define ou atualiza os horários disponíveis de um especialista (somente admin)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpecialistAvailability"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Especialista criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Specialist"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos ou usuário já registrado como especialista"
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "403": {
+            "description": "Acesso negado"
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          }
+        }
+      }
+    },
+    "/specialists/{id}": {
+      "get": {
+        "tags": ["Specialists"],
+        "summary": "Obter especialista por ID",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Especialista encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Specialist"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Especialista não encontrado"
+          }
+        }
+      }
+    },
+    "/specialists/{id}/availability": {
+      "put": {
+        "tags": ["Specialists"],
+        "summary": "Atualizar disponibilidade de um especialista",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Availability"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Disponibilidade atualizada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Specialist"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "404": {
+            "description": "Especialista não encontrado"
+          }
+        }
+      }
+    },
+    "/specialists/{id}/available-slots": {
+      "get": {
+        "tags": ["Specialists"],
+        "summary": "Listar horários disponíveis de um especialista",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de horários disponíveis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "example": "08:00"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Data inválida"
+          },
+          "404": {
+            "description": "Especialista não encontrado"
+          }
+        }
+      }
+    },
+    "/appointments": {
+      "post": {
+        "tags": ["Appointments"],
+        "summary": "Criar novo agendamento",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppointmentCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Agendamento criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Appointment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos ou horário indisponível"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      }
+    },
+    "/appointments/{id}": {
+      "get": {
+        "tags": ["Appointments"],
+        "summary": "Obter agendamento por ID",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agendamento encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Appointment"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Agendamento não encontrado"
+          }
+        }
+      }
+    },
+    "/appointments/{id}/status": {
+      "put": {
+        "tags": ["Appointments"],
+        "summary": "Atualizar status de um agendamento",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "confirmed",
+                      "cancelled",
+                      "completed",
+                      "rescheduled"
+                    ]
+                  }
+                },
+                "required": ["status"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Appointment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Status inválido ou cancelamento fora do prazo"
+          },
+          "404": {
+            "description": "Agendamento não encontrado"
+          }
+        }
+      }
+    },
+    "/appointments/{id}/reschedule": {
+      "post": {
+        "tags": ["Appointments"],
+        "summary": "Reagendar um agendamento",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "time": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+                  }
+                },
+                "required": ["date", "time"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Agendamento remarcado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Appointment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos ou horário indisponível"
+          },
+          "404": {
+            "description": "Agendamento não encontrado"
+          }
+        }
+      }
+    },
+    "/audit-logs": {
+      "get": {
+        "tags": ["AuditLogs"],
+        "summary": "Listar todos os logs de auditoria",
+        "description": "Retorna uma lista com todos os logs de auditoria (somente admin)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Lista de logs de auditoria",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditLog"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "403": {
+            "description": "Acesso negado"
+          }
+        }
+      }
+    },
+    "/audit-logs/{id}": {
+      "get": {
+        "tags": ["AuditLogs"],
+        "summary": "Obter log de auditoria por ID",
+        "description": "Retorna os dados de um log de auditoria específico (somente admin)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Log de auditoria encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditLog"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "403": {
+            "description": "Acesso negado"
+          },
+          "404": {
+            "description": "Log de auditoria não encontrado"
+          }
+        }
+      }
+    },
+    "/webhooks": {
+      "post": {
+        "tags": ["Webhooks"],
+        "summary": "Registrar um novo webhook",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Webhook registrado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      },
+      "get": {
+        "tags": ["Webhooks"],
+        "summary": "Listar webhooks do usuário",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Lista de webhooks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Webhook"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado"
+          }
+        }
+      }
+    },
+    "/webhooks/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "tags": ["Webhooks"],
+        "summary": "Obter webhook por ID",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Webhook encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Webhook"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "403": {
+            "description": "Permissão negada"
+          },
+          "404": {
+            "description": "Webhook não encontrado"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Webhooks"],
+        "summary": "Atualizar webhook",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "403": {
+            "description": "Permissão negada"
+          },
+          "404": {
+            "description": "Webhook não encontrado"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Webhooks"],
+        "summary": "Excluir webhook",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Webhook excluído com sucesso"
+          },
+          "401": {
+            "description": "Não autorizado"
+          },
+          "403": {
+            "description": "Permissão negada"
+          },
+          "404": {
+            "description": "Webhook não encontrado"
+          }
+        }
+      }
+    },
+    "/webhooks/{id}/test": {
+      "post": {
+        "tags": ["Webhooks"],
+        "summary": "Testar um webhook",
+        "description": "Envia um evento de teste para o webhook",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook de teste enviado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "event": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Webhook inativo"
+          },
+          "403": {
+            "description": "Permissão negada"
+          },
+          "404": {
+            "description": "Webhook não encontrado"
+          },
+          "500": {
+            "description": "Erro interno do servidor"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "UserRegistration": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "João Silva"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "joao@email.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "example": "senha123"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["client", "specialist", "scheduler", "admin"],
+            "example": "client"
+          },
+          "phone": {
+            "type": "string",
+            "example": "11999999999"
+          },
+          "cpf": {
+            "type": "string",
+            "example": "123.456.789-00"
+          },
+          "specialty": {
+            "type": "string",
+            "example": "Fisioterapia",
+            "description": "Obrigatório para usuários com role 'specialist'"
+          }
+        },
+        "required": ["name", "email", "password"]
+      },
+      "Login": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "joao@email.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "example": "senha123"
+          }
+        },
+        "required": ["email", "password"]
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "João Silva"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "joao@email.com"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["client", "specialist", "scheduler", "admin"],
+            "example": "client"
+          },
+          "active": {
+            "type": "boolean",
+            "example": true
+          },
+          "priority": {
+            "type": "boolean",
+            "example": false
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UserExtended": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/User"
+          }
+        ],
+        "type": "object",
+        "properties": {
+          "clientProfile": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "user_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "phone": {
+                "type": "string",
+                "example": "11999999999"
+              },
+              "cpf": {
+                "type": "string",
+                "example": "123.456.789-00"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "nullable": true
+          },
+          "specialistProfile": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "user_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "specialty": {
+                "type": "string",
+                "example": "Dentista"
+              },
+              "daily_limit": {
+                "type": "integer",
+                "example": 8
+              },
+              "min_interval_minutes": {
+                "type": "integer",
+                "example": 30
+              },
+              "availability": {
+                "$ref": "#/components/schemas/Availability"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "nullable": true
+          }
+        }
+      },
+      "UserUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "João Silva"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "joao@email.com"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["client", "specialist", "scheduler", "admin"],
+            "example": "client"
+          },
+          "active": {
+            "type": "boolean",
+            "example": true
+          },
+          "priority": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "Client": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "phone": {
+            "type": "string",
+            "example": "11999999999"
+          },
+          "cpf": {
+            "type": "string",
+            "example": "123.456.789-00"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "active": {
+                "type": "boolean"
+              },
+              "priority": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "ClientUpdate": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "example": "11999999999"
+          },
+          "cpf": {
+            "type": "string",
+            "example": "123.456.789-00"
+          }
+        },
+        "required": ["phone", "cpf"]
+      },
+      "Specialist": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "specialty": {
+            "type": "string"
+          },
+          "daily_limit": {
+            "type": "integer"
+          },
+          "min_interval_minutes": {
+            "type": "integer"
+          },
+          "availability": {
+            "$ref": "#/components/schemas/Availability"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "role": {
+                "type": "string"
+              },
+              "active": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "SpecialistCreate": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID do usuário que será vinculado ao especialista"
+          },
+          "specialty": {
+            "type": "string",
+            "example": "Dentista",
+            "description": "Especialidade do profissional"
+          },
+          "daily_limit": {
+            "type": "integer",
+            "example": 8,
+            "description": "Limite diário de atendimentos"
+          },
+          "min_interval_minutes": {
+            "type": "integer",
+            "example": 30,
+            "description": "Intervalo mínimo entre atendimentos (em minutos)"
+          },
+          "availability": {
+            "$ref": "#/components/schemas/Availability",
+            "description": "Disponibilidade inicial do especialista (opcional)"
+          }
+        },
+        "required": ["user_id", "specialty"]
+      },
+      "SpecialistAvailability": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "c435c4e3-c11f-4354-84f0-0f1f814d3064",
+            "description": "ID do usuário especialista"
+          },
+          "specialty": {
+            "type": "string",
+            "example": "Fisioterapia",
+            "description": "Especialidade do profissional"
+          },
+          "daily_limit": {
+            "type": "integer",
+            "example": 8,
+            "description": "Limite máximo de atendimentos diários"
+          },
+          "min_interval_minutes": {
+            "type": "integer",
+            "example": 30,
+            "description": "Intervalo mínimo entre atendimentos em minutos"
+          },
+          "availability": {
+            "$ref": "#/components/schemas/Availability"
+          }
+        },
+        "required": ["user_id", "specialty"],
+        "example": {
+          "user_id": "c435c4e3-c11f-4354-84f0-0f1f814d3064",
+          "specialty": "Fisioterapia",
+          "daily_limit": 8,
+          "min_interval_minutes": 30,
+          "availability": {
+            "monday": ["08:00", "09:00", "10:00", "14:00", "15:00"],
+            "tuesday": ["08:00", "14:00"],
+            "wednesday": ["10:00", "11:00"],
+            "thursday": ["09:00", "15:00"],
+            "friday": ["10:00", "16:00"],
+            "saturday": ["08:00"],
+            "sunday": ["14:00"]
+          }
+        }
+      },
+      "Availability": {
+        "type": "object",
+        "description": "Horários disponíveis para cada dia da semana no formato HH:MM",
+        "properties": {
+          "monday": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+            },
+            "example": ["08:00", "09:00", "10:00", "14:00", "15:00"]
+          },
+          "tuesday": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+            },
+            "example": ["08:00", "14:00"]
+          },
+          "wednesday": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+            },
+            "example": ["10:00", "11:00"]
+          },
+          "thursday": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+            },
+            "example": ["09:00", "15:00"]
+          },
+          "friday": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+            },
+            "example": ["10:00", "16:00"]
+          },
+          "saturday": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+            },
+            "example": ["08:00"]
+          },
+          "sunday": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+            },
+            "example": ["14:00"]
+          }
+        }
+      },
+      "AppointmentCreate": {
+        "type": "object",
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "specialist_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "example": "2025-05-20"
+          },
+          "time": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$",
+            "example": "14:00"
+          }
+        },
+        "required": ["client_id", "specialist_id", "date", "time"]
+      },
+      "Appointment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "client_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "specialist_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scheduled_by_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "time": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):([0-5]\\d)$"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "confirmed",
+              "cancelled",
+              "completed",
+              "rescheduled",
+              "expired"
+            ]
+          },
+          "rescheduled_from_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AuditLog": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "action": {
+            "type": "string",
+            "example": "Criação de agendamento",
+            "description": "Descrição da ação realizada"
+          },
+          "entity_type": {
+            "type": "string",
+            "example": "appointment",
+            "description": "Tipo de entidade afetada pela ação"
+          },
+          "entity_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID da entidade afetada pela ação"
+          },
+          "details": {
+            "type": "object",
+            "description": "Detalhes adicionais da ação (como dados anteriores e novos)"
+          },
+          "ip_address": {
+            "type": "string",
+            "example": "192.168.1.1",
+            "description": "Endereço IP de onde a ação foi realizada"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              }
+            },
+            "description": "Informações do usuário que realizou a ação"
+          }
+        }
+      },
+      "WebhookEventType": {
+        "type": "string",
+        "enum": [
+          "appointment.created",
+          "appointment.updated",
+          "appointment.cancelled",
+          "appointment.completed",
+          "appointment.rescheduled",
+          "client.created",
+          "specialist.created"
+        ]
+      },
+      "WebhookCreate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Meu Webhook"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://meuapp.com/webhooks/receive"
+          },
+          "secret": {
+            "type": "string",
+            "example": "meu_segredo_para_assinatura"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookEventType"
+            },
+            "example": ["appointment.created", "appointment.cancelled"]
+          }
+        },
+        "required": ["name", "url", "events"]
+      },
+      "WebhookUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Meu Webhook Atualizado"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://meuapp.com/webhooks/receive"
+          },
+          "secret": {
+            "type": "string",
+            "example": "meu_segredo_para_assinatura"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookEventType"
+            }
+          },
+          "is_active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Webhook": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookEventType"
+            }
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "WebhookResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "webhook": {
+            "$ref": "#/components/schemas/Webhook"
+          }
+        }
+      }
+    }
+  }
+}

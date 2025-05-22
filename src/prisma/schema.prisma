@@ -1,0 +1,133 @@
+generator client {
+    provider      = "prisma-client-js"
+    binaryTargets = ["native", "debian-openssl-1.1.x"]
+}
+
+datasource db {
+    provider = "mysql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id         String   @id @default(uuid())
+    name       String
+    email      String   @unique
+    password   String
+    role       Role     @default(client)
+    priority   Boolean  @default(false)
+    active     Boolean  @default(true)
+    created_at DateTime @default(now())
+    updated_at DateTime @updatedAt
+
+    specialist  Specialist?
+    client      Client?
+    scheduledBy Appointment[] @relation("ScheduledBy")
+    auditLogs   AuditLog[]
+
+    webhooks Webhook[]
+
+    @@map("users")
+}
+
+enum Role {
+    client
+    specialist
+    scheduler
+    admin
+}
+
+model Specialist {
+    id                   String   @id @default(uuid())
+    user_id              String   @unique
+    user                 User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    specialty            String?
+    daily_limit          Int
+    min_interval_minutes Int
+    availability         Json?
+    created_at           DateTime @default(now())
+    updated_at           DateTime @updatedAt
+
+    appointments Appointment[]
+
+    @@map("specialists")
+}
+
+model Client {
+    id         String   @id @default(uuid())
+    user_id    String   @unique
+    user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+    phone      String
+    cpf        String
+    created_at DateTime @default(now())
+    updated_at DateTime @updatedAt
+
+    appointments Appointment[]
+
+    @@map("clients")
+}
+
+model Appointment {
+    id                  String            @id @default(uuid())
+    client_id           String
+    specialist_id       String
+    scheduled_by_id     String
+    date                DateTime
+    time                String
+    status              AppointmentStatus @default(pending)
+    rescheduled_from_id String?
+    created_at          DateTime          @default(now())
+    updated_at          DateTime          @updatedAt
+
+    client          Client        @relation(fields: [client_id], references: [id])
+    specialist      Specialist    @relation(fields: [specialist_id], references: [id])
+    scheduledBy     User          @relation("ScheduledBy", fields: [scheduled_by_id], references: [id])
+    rescheduledFrom Appointment?  @relation("RescheduledAppointments", fields: [rescheduled_from_id], references: [id])
+    rescheduledTo   Appointment[] @relation("RescheduledAppointments")
+
+    @@map("appointments")
+}
+
+enum AppointmentStatus {
+    pending
+    confirmed
+    cancelled
+    completed
+    rescheduled
+    expired
+}
+
+model AuditLog {
+    id          String     @id @default(uuid())
+    user_id     String
+    action_type ActionType
+    entity      String
+    entity_id   String
+    message     String     @db.Text
+    created_at  DateTime   @default(now())
+
+    user User @relation(fields: [user_id], references: [id])
+
+    @@map("audit_logs")
+}
+
+enum ActionType {
+    create
+    reschedule
+    cancel
+    validation_error
+}
+
+model Webhook {
+    id         String   @id @default(uuid())
+    name       String
+    url        String
+    secret     String?
+    events     Json
+    is_active  Boolean  @default(true)
+    created_at DateTime @default(now())
+    updated_at DateTime @updatedAt
+    created_by String
+    creator    User     @relation(fields: [created_by], references: [id])
+
+    @@map("webhooks")
+}
