@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Instalar OpenSSL e outras dependências necessárias
 RUN apt-get update -y && \
-    apt-get install -y openssl
+    apt-get install -y openssl netcat-traditional
 
 # Copiar apenas os arquivos de dependências primeiro
 COPY package*.json ./
@@ -26,7 +26,11 @@ RUN npx prisma generate
 # Copiar o resto dos arquivos
 COPY . .
 
+# Copiar e dar permissão ao script de entrada
+COPY docker-entrypoint.sh .
+RUN chmod +x docker-entrypoint.sh
+
 EXPOSE 3000
 
-# Usar o script de desenvolvimento
-CMD ["npm", "run", "dev"]
+# Usar o script de entrada
+CMD ["./docker-entrypoint.sh"]

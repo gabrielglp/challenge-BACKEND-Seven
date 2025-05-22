@@ -72,7 +72,7 @@ Este é um sistema completo de agendamentos desenvolvido com **Node.js**, **Expr
 1. Certifique-se de que **Docker** e **Docker Compose** estão instalados.
 2. Execute na raiz do projeto:
    ```bash
-   docker-compose up
+   docker-compose up --build
    ```
 3. Containers iniciados:
    - `agenda-api`: Aplicação Node.js (porta 3000)
